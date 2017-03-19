@@ -45,19 +45,23 @@ getPlayer playerNumber gameState = case playerNumber of
 chooseFlag :: PlayerNumber -> GameState -> IO Flag
 chooseFlag playerNumber gameState = do
     input <- ask "Please pick a flag"
-    case input of
-        "1" -> return One
-        "2" -> return Two
-        "3" -> return Three
-        "4" -> return Four
-        "5" -> return Five
-        "6" -> return Six
-        "7" -> return Seven
-        "8" -> return Eight
-        "9" -> return Nine
-        _ -> chooseFlag playerNumber gameState
+    let maybeFlag = flagFromString input
+    case maybeFlag of
+      Just x -> return x
+      Nothing -> chooseFlag playerNumber gameState
 
- 
+flagFromString :: String -> Maybe Flag
+flagFromString "1" = Just One
+flagFromString "2" = Just Two
+flagFromString "3" = Just Three
+flagFromString "4" = Just Four
+flagFromString "5" = Just Five
+flagFromString "6" = Just Six
+flagFromString "7" = Just Seven
+flagFromString "8" = Just Eight
+flagFromString "9" = Just Nine
+flagFromString _ = Nothing
+
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
 updateGame = undefined
 
