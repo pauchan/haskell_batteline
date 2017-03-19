@@ -5,7 +5,7 @@ data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player 
 type Hand = [Card]
 data Player = Player { hand :: Hand }
 data Card = Card deriving (Show)
-data Flag = Flag
+data Flag = One | Two | Thee | Four | Five | Six | Seven | Eight | Nine deriving Enum
 data PlayerNumber = Player1 | Player2
 
 exit :: IO ()
@@ -44,9 +44,10 @@ getPlayer playerNumber gameState = case playerNumber of
 
 
 chooseFlag :: PlayerNumber -> GameState -> IO Flag
-chooseFlag = undefined
-
+chooseFlag playerNumber gameState = toEnum <$> (read <$> ask "please pick a flag")
+    
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
+    
 updateGame = undefined
 
 ask :: String -> IO String
