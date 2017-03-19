@@ -42,12 +42,18 @@ getPlayer playerNumber gameState = case playerNumber of
                                         Player1 -> player1 gameState
                                         Player2 -> player2 gameState 
 
+flagPrompt :: IO Int
+flagPrompt = do
+    input <- ask "Please pick a flag"
+    let result = reads input :: [(Int, String)]
+    case result of 
+        (first:rest) -> return $ fst first
+        _ -> flagPrompt
 
 chooseFlag :: PlayerNumber -> GameState -> IO Flag
-chooseFlag playerNumber gameState = toEnum <$> (read <$> ask "please pick a flag")
-    
+chooseFlag playerNumber gameState = toEnum <$> flagPrompt
+ 
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
-    
 updateGame = undefined
 
 ask :: String -> IO String
