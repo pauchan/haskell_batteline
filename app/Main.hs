@@ -5,7 +5,7 @@ data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player 
 type Hand = [Card]
 data Player = Player { hand :: Hand }
 data Card = Card deriving (Show)
-data Flag = One | Two | Thee | Four | Five | Six | Seven | Eight | Nine deriving Enum
+data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving Enum
 data PlayerNumber = Player1 | Player2
 
 exit :: IO ()
@@ -42,16 +42,21 @@ getPlayer playerNumber gameState = case playerNumber of
                                         Player1 -> player1 gameState
                                         Player2 -> player2 gameState 
 
-flagPrompt :: IO Int
-flagPrompt = do
-    input <- ask "Please pick a flag"
-    let result = reads input :: [(Int, String)]
-    case result of 
-        (first:rest) -> return $ fst first
-        _ -> flagPrompt
-
 chooseFlag :: PlayerNumber -> GameState -> IO Flag
-chooseFlag playerNumber gameState = toEnum <$> flagPrompt
+chooseFlag playerNumber gameState = do
+    input <- ask "Please pick a flag"
+    case input of
+        "1" -> return One
+        "2" -> return Two
+        "3" -> return Three
+        "4" -> return Four
+        "5" -> return Five
+        "6" -> return Six
+        "7" -> return Seven
+        "8" -> return Eight
+        "9" -> return Nine
+        _ -> chooseFlag playerNumber gameState
+
  
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
 updateGame = undefined
