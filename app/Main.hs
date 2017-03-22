@@ -43,9 +43,10 @@ getPlayer playerNumber gameState = case playerNumber of
                                         Player2 -> player2 gameState 
 
 chooseFlag :: PlayerNumber -> GameState -> IO Flag
-chooseFlag playerNumber gameState = do
-    maybeFlag <- flagFromString <$> ask "Please pick a flag"
-    maybe (chooseFlag playerNumber gameState) (return) maybeFlag
+chooseFlag playerNumber gameState = go
+    where
+        go = getFlag >>= maybe go return
+        getFlag = flagFromString <$> ask "Please pick aflag"
 
 flagFromString :: String -> Maybe Flag
 flagFromString "1" = Just One
