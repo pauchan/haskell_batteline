@@ -1,12 +1,19 @@
 module Main where
 
+import System.Random (newStdGen, randoms, StdGen)
+import Data.List (sortOn)
+
 type Deck = [Card]
 data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
 type Hand = [Card]
 data Player = Player { hand :: Hand }
-data Card = Card deriving (Show)
+data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum)
+data Card = Card Color Int deriving (Show)
 data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving Enum
 data PlayerNumber = Player1 | Player2
+
+shuffle :: StdGen -> [a] -> [a]
+shuffle gen = map snd . sortOn fst . zip (randoms gen :: [Int])
 
 exit :: IO ()
 exit = undefined
@@ -81,11 +88,16 @@ runGame gameState = do
   else
     runGame gameState'
 
-initialState :: GameState
-initialState = GameState { deck = []
-                         , player1 = Player []
-                         , player2 = Player []
-                         }
+initialDeck :: StdGen -> Deck
+initialDeck gen = shuffle gen [Card color value | color <- [Blue .. Yellow], value <- [1..10]]
+
+initialState :: StdGen -> GameState
+initialState gen = GameState { deck = initialDeck gen
+                             , player1 = Player []
+                             , player2 = Player []
+                             }
 
 main :: IO ()
-main = runGame initialState
+main = do
+  gen <- newStdGen
+  runGame $ initialState gen

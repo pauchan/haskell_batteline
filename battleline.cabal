@@ -25,6 +25,8 @@ executable battleline
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
                      , battleline
+                     , random
+                     , MonadRandom
   default-language:    Haskell2010
 
 test-suite battleline-test
