@@ -25,7 +25,10 @@ gameLoop :: GameState -> IO GameState
 gameLoop gameState = turn Player1 gameState >>= turn Player2
 
 turn :: PlayerNumber -> GameState -> IO GameState
-turn player gameState = draw player <$> playCard player gameState
+turn playerNumber gameState = do
+  let player = getPlayer playerNumber gameState
+  show (hand player)
+  draw playerNumber <$> playCard playerNumber gameState
 
 playCard :: PlayerNumber -> GameState -> IO GameState
 playCard player gameState = do
