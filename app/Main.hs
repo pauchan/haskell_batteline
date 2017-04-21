@@ -25,7 +25,10 @@ gameLoop :: GameState -> IO GameState
 gameLoop gameState = turn Player1 gameState >>= turn Player2
 
 turn :: PlayerNumber -> GameState -> IO GameState
-turn player gameState = draw player <$> playCard player gameState
+turn playerNumber gameState = do
+  let player = getPlayer playerNumber gameState
+  print $  hand player
+  draw playerNumber <$> playCard playerNumber gameState
 
 playCard :: PlayerNumber -> GameState -> IO GameState
 playCard player gameState = do
@@ -92,9 +95,13 @@ initialDeck :: StdGen -> Deck
 initialDeck gen = shuffle gen [Card color value | color <- [Blue .. Yellow], value <- [1..10]]
 
 initialState :: StdGen -> GameState
-initialState gen = GameState { deck = initialDeck gen
-                             , player1 = Player []
-                             , player2 = Player []
+initialState gen = do
+  let deck = initialDeck gen
+  let (player1hand, deck') = splitAt 7 deck
+  let (player2hand, deck'') = splitAt 7 deck'
+  GameState { deck = deck''
+                             , player1 = Player player1hand
+                             , player2 = Player player2hand
                              }
 
 main :: IO ()
