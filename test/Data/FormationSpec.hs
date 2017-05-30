@@ -14,4 +14,4 @@ spec :: Spec
 spec = do
   describe "formation" $ do
     it "Wedge is three cards with the same color and value" $ do
-      isWedge (Formation (Card Red 3, Card Red 4, Card Red 5)) == True
+      isWedge (Formation [Card Red 3, Card Red 4, Card Red 5]) == True
