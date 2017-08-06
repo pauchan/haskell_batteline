@@ -1,5 +1,7 @@
 module Data.Formation where
 
+import Data.List
+
 --data Formation = Formation {cards: [Card]}
 --jdata Formation = Formation {formationType :: FormationType,
 --                            formationValue :: Int
@@ -41,13 +43,23 @@ isSkirmish formation = isConsequtiveValue formation
 
 isSameValue :: Formation -> Bool
 isSameValue formation = do
-  let first = cards formation 
+  let first = value $ head $ cards formation
+  let values = map value $ cards formation
+  let sameCount = filter (== first) values
+  (==3) $ length sameCount
 
 isSameColor :: Formation -> Bool
-isSameColor formation = False
+isSameColor formation = do
+  let first = color $ head $ cards formation
+  let colors = map color $ cards formation
+  let sameCount = filter (== first) colors
+  (==3) $ length sameCount
 
 isConsequtiveValue :: Formation -> Bool
-isConsequtiveValue formation = False
+isConsequtiveValue formation = do
+  let values = map value $ cards formation
+  let sortedList = sort values
+  length sortedList == 3 && sortedList !! 0 == (sortedList !! 1) - 1 && sortedList !! 0 == (sortedList !! 2) - 2
 
 isHost :: Formation -> Bool
 isHost formation = count formation == 3

@@ -7,10 +7,16 @@ type Deck = [Card]
 data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
 type Hand = [Card]
 data Player = Player { hand :: Hand }
-data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum)
+data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum, Eq)
 data Card = Card Color Int deriving (Show)
 data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving Enum
 data PlayerNumber = Player1 | Player2
+
+color :: Card -> Color
+color (Card col _) = col
+
+value :: Card -> Int
+value (Card _ val) = val
 
 shuffle :: StdGen -> [a] -> [a]
 shuffle gen = map snd . sortOn fst . zip (randoms gen :: [Int])
