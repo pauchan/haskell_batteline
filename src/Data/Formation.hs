@@ -6,16 +6,26 @@ import Data.List
 --jdata Formation = Formation {formationType :: FormationType,
 --                            formationValue :: Int
 --                           } 
+
+type Deck = [Card]
+data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
+type Hand = [Card]
+data Player = Player { hand :: Hand, table :: [FlagStatus] }
+data FlagStatus = FlagStatus { flag :: Flag, formation :: Formation }
+data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum, Eq)
+--data Card = Card Color Int deriving (Show)
+data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving (Enum, Eq)
+data PlayerNumber = Player1 | Player2
+
+
 data Formation = Formation [Card]
 --type Formation = [Card]
 data FormationType = Host | Skirmish | Battalion | Phalanx | Wedge
 data Card = Card {color :: Color,
                   value :: Int
-                  }
+                  } deriving (Show)
 cards :: Formation -> [Card]
 cards (Formation cardlist) = cardlist
-
-data Color = Red | Blue | Purpule | Pink | Green | Yellow deriving (Show, Eq)
 
 count :: Formation -> Int
 count formation = length $ cards formation

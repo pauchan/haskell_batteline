@@ -2,21 +2,13 @@ module Main where
 
 import System.Random (newStdGen, randoms, StdGen)
 import Data.List (sortOn)
+import Data.Formation
 
-type Deck = [Card]
-data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
-type Hand = [Card]
-data Player = Player { hand :: Hand }
-data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum, Eq)
-data Card = Card Color Int deriving (Show)
-data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving Enum
-data PlayerNumber = Player1 | Player2
+--color :: Card -> Color
+--color (Card col _) = col
 
-color :: Card -> Color
-color (Card col _) = col
-
-value :: Card -> Int
-value (Card _ val) = val
+--value :: Card -> Int
+--value (Card _ val) = val
 
 shuffle :: StdGen -> [a] -> [a]
 shuffle gen = map snd . sortOn fst . zip (randoms gen :: [Int])
@@ -62,7 +54,7 @@ chooseFlag :: PlayerNumber -> GameState -> IO Flag
 chooseFlag playerNumber gameState = go
     where
         go = getFlag >>= maybe go return
-        getFlag = flagFromString <$> ask "Please pick aflag"
+        getFlag = flagFromString <$> ask "Please pick a flag"
 
 flagFromString :: String -> Maybe Flag
 flagFromString "1" = Just One
@@ -76,8 +68,25 @@ flagFromString "8" = Just Eight
 flagFromString "9" = Just Nine
 flagFromString _ = Nothing
 
+--updateFlag :: [FlagStatus] -> Card -> [FlagStatus
+--updateFlag flagStatus card = 
+
+addCard :: Formation -> Card -> Formation
+addCard formation card = Formation $ ((cards formation) ++ [card])
+
+isSelectedFlag :: FlagStatus -> Flag -> Bool
+isSelectedFlag flagStatus f = flag flagStatus == f
+
+addCardToFlag :: FlagStatus -> Card -> FlagStatus
+addCardToFlag flagStatus card = FlagStatus { formation = addCard (formation flagStatus) card }
+
+updatePlayer :: Player -> Card -> Flag -> Player
+updatePlayer player card flag = do
+  let newFlagStatus = map (\x -> if isSelectedFlag x flag then addCardToFlag x card else x) $ table player
+  Player { table = newFlagStatus }
+
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
-updateGame = undefined
+updateGame player card flag gameState = undefined
 
 ask :: String -> IO String
 ask message = putStrLn message >> getLine
@@ -97,6 +106,17 @@ runGame gameState = do
   else
     runGame gameState'
 
+initialTable :: [FlagStatus]
+initialTable = [FlagStatus One $ Formation [],
+  FlagStatus Two $ Formation [],
+  FlagStatus Three $ Formation [],
+  FlagStatus Four $ Formation [],
+  FlagStatus Five $ Formation [],
+  FlagStatus Six $ Formation [],
+  FlagStatus Seven $ Formation [],
+  FlagStatus Eight $ Formation [],
+  FlagStatus Nine $ Formation [] ]
+
 initialDeck :: StdGen -> Deck
 initialDeck gen = shuffle gen [Card color value | color <- [Blue .. Yellow], value <- [1..10]]
 
@@ -106,8 +126,8 @@ initialState gen = do
   let (player1hand, deck') = splitAt 7 deck
   let (player2hand, deck'') = splitAt 7 deck'
   GameState { deck = deck''
-                             , player1 = Player player1hand
-                             , player2 = Player player2hand
+                             , player1 = Player player1hand initialTable
+                             , player2 = Player player2hand initialTable
                              }
 
 main :: IO ()
