@@ -17,7 +17,7 @@ exit :: IO ()
 exit = undefined
 
 winning :: GameState -> Bool
-winning = undefined
+winning state = False
 
 gameLoop :: GameState -> IO GameState
 gameLoop gameState = turn Player1 gameState >>= turn Player2
@@ -42,13 +42,20 @@ draw playerNumber gameState = updatePlayer gameState'
     player = getPlayer playerNumber gameState
     player' =  player { hand = topCard:(hand player) }
     updatePlayer gameState = case playerNumber of 
-                                  Player1 -> gameState { player1 = player'}
-                                  Player2 -> gameState { player2 = player' }
+                                  Player1 -> setPlayer1 player' gameState
+                                  Player2 -> setPlayer2 player' gameState
 
 getPlayer :: PlayerNumber -> GameState -> Player
 getPlayer playerNumber gameState = case playerNumber of
                                         Player1 -> player1 gameState
                                         Player2 -> player2 gameState 
+
+
+setPlayer1 :: Player -> GameState -> GameState
+setPlayer1 player state = GameState { deck = deck state, player1 = player, player2 = player2 state }
+
+setPlayer2 :: Player -> GameState -> GameState
+setPlayer2 player state = GameState { deck = deck state, player1 = player1 state , player2 = player }
 
 chooseFlag :: PlayerNumber -> GameState -> IO Flag
 chooseFlag playerNumber gameState = go
@@ -83,10 +90,15 @@ addCardToFlag flagStatus card = FlagStatus { formation = addCard (formation flag
 updatePlayer :: Player -> Card -> Flag -> Player
 updatePlayer player card flag = do
   let newFlagStatus = map (\x -> if isSelectedFlag x flag then addCardToFlag x card else x) $ table player
-  Player { table = newFlagStatus }
+  Player { hand = (hand player), table = newFlagStatus }
 
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
-updateGame player card flag gameState = undefined
+updateGame player card flag gameState = do
+  let p = getPlayer player gameState
+  case player of
+    Player1 -> setPlayer1 (updatePlayer p card flag) gameState
+    Player2 -> setPlayer2 (updatePlayer p card flag) gameState
+
 
 ask :: String -> IO String
 ask message = putStrLn message >> getLine
