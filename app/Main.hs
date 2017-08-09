@@ -25,7 +25,7 @@ gameLoop gameState = turn Player1 gameState >>= turn Player2
 turn :: PlayerNumber -> GameState -> IO GameState
 turn playerNumber gameState = do
   let player = getPlayer playerNumber gameState
-  print $  hand player
+  print $  gameState
   draw playerNumber <$> playCard playerNumber gameState
 
 playCard :: PlayerNumber -> GameState -> IO GameState
@@ -84,12 +84,12 @@ addCard formation card = Formation $ ((cards formation) ++ [card])
 isSelectedFlag :: FlagStatus -> Flag -> Bool
 isSelectedFlag flagStatus f = flag flagStatus == f
 
-addCardToFlag :: FlagStatus -> Card -> FlagStatus
-addCardToFlag flagStatus card = FlagStatus { formation = addCard (formation flagStatus) card }
+addCardToFlag :: FlagStatus -> Card -> Flag -> FlagStatus
+addCardToFlag flagStatus card flag = FlagStatus { flag = flag, formation = addCard (formation flagStatus) card }
 
 updatePlayer :: Player -> Card -> Flag -> Player
 updatePlayer player card flag = do
-  let newFlagStatus = map (\x -> if isSelectedFlag x flag then addCardToFlag x card else x) $ table player
+  let newFlagStatus = map (\x -> if isSelectedFlag x flag then addCardToFlag x card flag else x) $ table player
   Player { hand = (hand player), table = newFlagStatus }
 
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
