@@ -2,11 +2,6 @@ module Data.Formation where
 
 import Data.List
 
---data Formation = Formation {cards: [Card]}
---jdata Formation = Formation {formationType :: FormationType,
---                            formationValue :: Int
---                           } 
-
 type Deck = [Card]
 data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
 type Hand = [Card]
@@ -31,7 +26,6 @@ instance Show Formation where
 
 instance Show FlagStatus where
   show status = show $ formation status
-  --show status = foldr (++) "" (show (formation status))
 
 showFlags :: [FlagStatus] -> [FlagStatus] -> String
 showFlags [] [] = ""

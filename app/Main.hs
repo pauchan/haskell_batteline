@@ -10,8 +10,55 @@ shuffle gen = map snd . sortOn fst . zip (randoms gen :: [Int])
 exit :: IO ()
 exit = undefined
 
-winning :: GameState -> Bool
-winning state = False
+winning :: GameState -> PlayerNumber -> Bool
+winning state playerNumber = do
+  let zipStates = zipStates state playerNumber
+  let winningFlags = map (winningFlag privateCards ) zipStates
+  return fiveWinning winningFlags || threeConsqutive 0 winningFlags
+
+boolToInt :: Bool -> Int
+boolToInt True = 1
+boolToInt False = 0
+
+zipStates :: GameState -> PlayerNumber -> [(Formation, Formation)]
+zipStates state playerNumber = zip (getFormation state playerNumber) (getFormation state $ getOpponet playerNumber)
+
+getFormation :: GameState -> PlayerNumber -> [Formation]
+getFormation state Player1 = map formation $ table (player1 state)
+getFormation state Player2 = map formation $ table (player2 state)
+
+fiveWinning :: [Bool] -> Bool
+fiveWinning winnings = (foldl (+) $ map boolToInt winnings) >= 5
+
+threeConsqutive :: Int -> [Bool] -> Bool
+threeConsqutive count [] = count >= 3
+threeConsqutive count [x] = threeConsqutive (checkConsequtive count x) []
+threeConsqutive count (x:xs) = threeConsqutive (checkConsequtive count x) xs
+
+checkConsequtive :: Int -> Bool -> Int
+checkConsequtive count True = count + 1
+checkConsequtive count False = 0
+
+winningFlag :: [Card] -> (Formation, Formation) -> Bool
+winningFlag privateCards (myFlag,opponentFlag) = do
+  let myFlagStatus = formationType myFlag
+  let opponentFlagStatus = formationType opponentFlag
+  case (myFlagStatus, opponentFlagStatus) of 
+    (Nothing, _) -> return False
+    (Just x, Just y) -> x > y
+    (Just x, Nothing) -> noPossibleWinners x opponentFlag privateCards
+
+noPossibleWinners :: FormationType -> Formation -> [Card] -> Bool
+noPossibleWinners t formation [] = True
+noPossibleWinners t formation [x] = case formationType formation ++ x of
+  Nothing -> True
+  Just x -> formation > x
+noPossibleWinners t formation [x:xs] = case formationType formation ++ x of
+  Nothing -> noPossibleWinners t formation xs
+  Just x -> formation > x
+
+privateCards :: [Card] -> [Card] -> [Card]
+privateCards deck opponentHand = deck ++ opponentHand
 
 gameLoop :: GameState -> IO GameState
 gameLoop gameState = turn Player1 gameState >>= turn Player2
