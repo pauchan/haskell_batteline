@@ -22,10 +22,15 @@ winning state = False
 gameLoop :: GameState -> IO GameState
 gameLoop gameState = turn Player1 gameState >>= turn Player2
 
+getOpponet :: PlayerNumber -> PlayerNumber
+getOpponet Player1 = Player2
+getOpponet Player2 = Player1
+
 turn :: PlayerNumber -> GameState -> IO GameState
 turn playerNumber gameState = do
   let player = getPlayer playerNumber gameState
-  print $  gameState
+  let opponent = getPlayer (getOpponet playerNumber) gameState
+  putStr $ showStateForPlayer gameState player opponent
   draw playerNumber <$> playCard playerNumber gameState
 
 playCard :: PlayerNumber -> GameState -> IO GameState

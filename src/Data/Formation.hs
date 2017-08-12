@@ -10,23 +10,40 @@ import Data.List
 type Deck = [Card]
 data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
 type Hand = [Card]
+data Formation = Formation [Card] 
+--type Formation = [Card]
+data FormationType = Host | Skirmish | Battalion | Phalanx | Wedge
+data Card = Card {color :: Color,
+                  value :: Int
+                  }
 data Player = Player { hand :: Hand, table :: [FlagStatus] } deriving ( Show )
-data FlagStatus = FlagStatus { flag :: Flag, formation :: Formation } deriving ( Show )
+data FlagStatus = FlagStatus { flag :: Flag, formation :: Formation }
 data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum, Eq)
 --data Card = Card Color Int deriving (Show)
 data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving (Enum, Eq, Show)
 data PlayerNumber = Player1 | Player2
 
-instance Show GameState where
-  show state = (show $ player1 state) ++ "\n" ++ (show $ player1 state)
+instance Show Card where
+  show card = (show $ color card) ++ " " ++ (show $ value card)
 
+instance Show Formation where
+  show formation = show $ cards formation
 
-data Formation = Formation [Card]  deriving ( Show )
---type Formation = [Card]
-data FormationType = Host | Skirmish | Battalion | Phalanx | Wedge
-data Card = Card {color :: Color,
-                  value :: Int
-                  } deriving (Show)
+instance Show FlagStatus where
+  show status = show $ formation status
+  --show status = foldr (++) "" (show (formation status))
+
+showFlags :: [FlagStatus] -> [FlagStatus] -> String
+showFlags [] [] = ""
+showFlags [x] [y] = showFlag x y
+showFlags (x:xs) (y:ys) = showFlag x y ++ showFlags xs ys
+
+showFlag :: FlagStatus -> FlagStatus -> String
+showFlag x y = show x ++ " | " ++ show y ++ "\n"
+
+showStateForPlayer :: GameState -> Player -> Player -> String
+showStateForPlayer state player opponent = (show $ hand player) ++ "\n" ++ (showFlags (table player) (table opponent))
+
 cards :: Formation -> [Card]
 cards (Formation cardlist) = cardlist
 
