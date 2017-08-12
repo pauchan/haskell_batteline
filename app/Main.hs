@@ -2,6 +2,7 @@ module Main where
 
 import System.Random (newStdGen, randoms, StdGen)
 import Data.List (sortOn)
+import Data.Tuple (swap)
 import Data.Formation
 
 shuffle :: StdGen -> [a] -> [a]
@@ -10,11 +11,24 @@ shuffle gen = map snd . sortOn fst . zip (randoms gen :: [Int])
 exit :: IO ()
 exit = undefined
 
+showFlags :: [FlagStatus] -> [FlagStatus] -> GameState -> String
+showFlags [] [] state = ""
+showFlags [x] [y] state = showFlag x y state
+showFlags (x:xs) (y:ys) state = showFlag x y state ++ showFlags xs ys state
+
+showFlag :: FlagStatus -> FlagStatus -> GameState -> String
+showFlag x y state = show x ++ " | " ++ show y ++ (takenString x y state) ++ "\n"
+
+showStateForPlayer :: GameState -> Player -> Player -> String
+showStateForPlayer state player opponent = (show $ hand player) ++ "\n" ++ (showFlags (table player) (table opponent) state)
+
 winning :: GameState -> PlayerNumber -> Bool
 winning state playerNumber = do
-  let zipStates = zipStates state playerNumber
-  let winningFlags = map (winningFlag privateCards ) zipStates
-  return fiveWinning winningFlags || threeConsqutive 0 winningFlags
+  let zs = zipStates state playerNumber
+  let opponent = getPlayer (getOpponet playerNumber) state
+  let pc = privateCards (deck state) (hand opponent)
+  let winningFlags = map (winningFlag pc) zs
+  fiveWinning winningFlags || threeConsqutive 0 winningFlags
 
 boolToInt :: Bool -> Int
 boolToInt True = 1
@@ -28,7 +42,7 @@ getFormation state Player1 = map formation $ table (player1 state)
 getFormation state Player2 = map formation $ table (player2 state)
 
 fiveWinning :: [Bool] -> Bool
-fiveWinning winnings = (foldl (+) $ map boolToInt winnings) >= 5
+fiveWinning winnings = (foldl (+) 0 $ map boolToInt winnings) >= 5
 
 threeConsqutive :: Int -> [Bool] -> Bool
 threeConsqutive count [] = count >= 3
@@ -44,24 +58,21 @@ winningFlag privateCards (myFlag,opponentFlag) = do
   let myFlagStatus = formationType myFlag
   let opponentFlagStatus = formationType opponentFlag
   case (myFlagStatus, opponentFlagStatus) of 
-    (Nothing, _) -> return False
+    (Nothing, _) -> False
     (Just x, Just y) -> x > y
     (Just x, Nothing) -> noPossibleWinners x opponentFlag privateCards
 
 noPossibleWinners :: FormationType -> Formation -> [Card] -> Bool
 noPossibleWinners t formation [] = True
-noPossibleWinners t formation [x] = case formationType formation ++ x of
+noPossibleWinners t formation [x] = case formationType (addCard formation x) of
   Nothing -> True
-  Just x -> formation > x
-noPossibleWinners t formation [x:xs] = case formationType formation ++ x of
+  Just form -> t > form
+noPossibleWinners t formation (x:xs) = case formationType (addCard formation x) of
   Nothing -> noPossibleWinners t formation xs
-  Just x -> formation > x
+  Just x -> t > x
 
 privateCards :: [Card] -> [Card] -> [Card]
 privateCards deck opponentHand = deck ++ opponentHand
-
-gameLoop :: GameState -> IO GameState
-gameLoop gameState = turn Player1 gameState >>= turn Player2
 
 getOpponet :: PlayerNumber -> PlayerNumber
 getOpponet Player1 = Player2
@@ -78,7 +89,31 @@ playCard :: PlayerNumber -> GameState -> IO GameState
 playCard player gameState = do
   card <- chooseCard player gameState
   flag <- chooseFlag player gameState
-  return $ updateGame player card flag gameState
+  if playable flag player gameState then
+    return $ updateGame player card flag gameState
+  else  
+    playCard player gameState
+
+playable :: Flag -> PlayerNumber -> GameState -> Bool
+playable flag playerNumber state = do
+  let flagState = (table $ getPlayer playerNumber state) !! (intFromFlag flag)
+  let maxThreeCards = length (cards (formation flagState)) >= 3
+  not (maxThreeCards || takenBy flag Player1 state || takenBy flag Player2 state)
+
+takenBy :: Flag -> PlayerNumber -> GameState -> Bool
+takenBy flag playerNumber state = do
+  let pc = privateCards (deck state) (hand $ getPlayer playerNumber state)
+  let flagState = zipStates state playerNumber !! (intFromFlag flag)
+  winningFlag pc flagState
+
+takenString :: FlagStatus -> FlagStatus -> GameState -> String
+takenString flagStatus oppStatus state = do
+  let p1 = takenBy (flag flagStatus) Player1 state
+  let p2 = takenBy (flag oppStatus) Player2 state
+  case (p1, p2) of 
+    (True, _) -> " taken by player 1"
+    (False, True) -> " taken by player 2"
+    otherwise -> " flag unoccupied"
 
 draw :: PlayerNumber -> GameState -> GameState
 draw playerNumber gameState = updatePlayer gameState'
@@ -121,18 +156,32 @@ flagFromString "8" = Just Eight
 flagFromString "9" = Just Nine
 flagFromString _ = Nothing
 
+intFromFlag :: Flag -> Int
+intFromFlag One = 0
+intFromFlag Two = 1
+intFromFlag Three = 2
+intFromFlag Four = 3
+intFromFlag Five = 4
+intFromFlag Six = 5
+intFromFlag Seven = 6
+intFromFlag Eight = 7
+intFromFlag Nine = 8
+
 addCard :: Formation -> Card -> Formation
 addCard formation card = Formation $ ((cards formation) ++ [card])
 
-isSelectedFlag :: FlagStatus -> Flag -> Bool
-isSelectedFlag flagStatus f = flag flagStatus == f
+isSelectedFlag :: Flag -> FlagStatus -> Bool
+isSelectedFlag f flagStatus = flag flagStatus == f
+
+--getFlagStatus :: GameState -> Flag -> FlagStatus
+--getFlagStatus state flag = head (filter (isSelectedFlag flag) state  
 
 addCardToFlag :: FlagStatus -> Card -> Flag -> FlagStatus
 addCardToFlag flagStatus card flag = FlagStatus { flag = flag, formation = addCard (formation flagStatus) card }
 
 updatePlayer :: Player -> Card -> Flag -> Player
 updatePlayer player card flag = do
-  let newFlagStatus = map (\x -> if isSelectedFlag x flag then addCardToFlag x card flag else x) $ table player
+  let newFlagStatus = map (\x -> if isSelectedFlag flag x then addCardToFlag x card flag else x) $ table player
   let newHand = updateHand (hand player) card
   Player { hand = newHand, table = newFlagStatus }
 
@@ -157,13 +206,20 @@ chooseCard playerNumber gameState = do
   where
     player = getPlayer playerNumber gameState
 
+gameLoop :: GameState -> IO GameState
+gameLoop gameState = turn Player1 gameState >>= turn Player2
+
 runGame :: GameState -> IO ()
 runGame gameState = do
-  gameState' <- gameLoop gameState
-  if winning gameState' then
+  gameState' <- turn Player1 gameState
+  if winning gameState' Player1 then
     exit
-  else
-    runGame gameState'
+  else do
+    gameState'' <- turn Player2 gameState'
+    if winning gameState'' Player2 then
+      exit
+    else
+      runGame gameState''
 
 initialTable :: [FlagStatus]
 initialTable = [FlagStatus One $ Formation [],

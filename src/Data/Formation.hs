@@ -6,8 +6,7 @@ type Deck = [Card]
 data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
 type Hand = [Card]
 data Formation = Formation [Card] 
---type Formation = [Card]
-data FormationType = Host | Skirmish | Battalion | Phalanx | Wedge
+data FormationType = Host | Skirmish | Battalion | Phalanx | Wedge deriving ( Eq, Ord)
 data Card = Card {color :: Color,
                   value :: Int
                   } deriving ( Eq )
@@ -18,6 +17,10 @@ data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum,
 data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving (Enum, Eq, Show)
 data PlayerNumber = Player1 | Player2
 
+instance Eq Formation where
+  (==) formation = do
+    let 
+
 instance Show Card where
   show card = (show $ color card) ++ " " ++ (show $ value card)
 
@@ -26,17 +29,6 @@ instance Show Formation where
 
 instance Show FlagStatus where
   show status = show $ formation status
-
-showFlags :: [FlagStatus] -> [FlagStatus] -> String
-showFlags [] [] = ""
-showFlags [x] [y] = showFlag x y
-showFlags (x:xs) (y:ys) = showFlag x y ++ showFlags xs ys
-
-showFlag :: FlagStatus -> FlagStatus -> String
-showFlag x y = show x ++ " | " ++ show y ++ "\n"
-
-showStateForPlayer :: GameState -> Player -> Player -> String
-showStateForPlayer state player opponent = (show $ hand player) ++ "\n" ++ (showFlags (table player) (table opponent))
 
 cards :: Formation -> [Card]
 cards (Formation cardlist) = cardlist
