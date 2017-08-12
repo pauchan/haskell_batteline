@@ -20,7 +20,7 @@ showFlag :: FlagStatus -> FlagStatus -> GameState -> String
 showFlag x y state = show x ++ " | " ++ show y ++ (takenString x y state) ++ "\n"
 
 showStateForPlayer :: GameState -> Player -> Player -> String
-showStateForPlayer state player opponent = (show $ hand player) ++ "\n" ++ (showFlags (table player) (table opponent) state)
+showStateForPlayer state player opponent = show  (show $ hand player) ++ "\n" ++ (showFlags (table player) (table opponent) state)
 
 winning :: GameState -> PlayerNumber -> Bool
 winning state playerNumber = do
@@ -46,8 +46,8 @@ fiveWinning winnings = (foldl (+) 0 $ map boolToInt winnings) >= 5
 
 threeConsqutive :: Int -> [Bool] -> Bool
 threeConsqutive count [] = count >= 3
-threeConsqutive count [x] = threeConsqutive (checkConsequtive count x) []
-threeConsqutive count (x:xs) = threeConsqutive (checkConsequtive count x) xs
+threeConsqutive count [x] = if count >= 3 then True else threeConsqutive (checkConsequtive count x) []
+threeConsqutive count (x:xs) = if count >= 3 then True else threeConsqutive (checkConsequtive count x) xs
 
 checkConsequtive :: Int -> Bool -> Int
 checkConsequtive count True = count + 1
@@ -62,7 +62,7 @@ winningFlag privateCards (myFlag,opponentFlag) = do
     (Just x, Just y) -> x > y
     (Just x, Nothing) -> noPossibleWinners x opponentFlag privateCards
 
-noPossibleWinners :: FormationType -> Formation -> [Card] -> Bool
+noPossibleWinners :: FormationValue -> Formation -> [Card] -> Bool
 noPossibleWinners t formation [] = True
 noPossibleWinners t formation [x] = case formationType (addCard formation x) of
   Nothing -> True

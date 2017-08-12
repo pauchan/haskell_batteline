@@ -5,7 +5,8 @@ import Data.List
 type Deck = [Card]
 data GameState = GameState { deck :: Deck, player1 :: Player, player2 :: Player }
 type Hand = [Card]
-data Formation = Formation [Card] 
+data Formation = Formation [Card] deriving ( Eq ) 
+data FormationValue = FormationValue FormationType Int deriving ( Eq )
 data FormationType = Host | Skirmish | Battalion | Phalanx | Wedge deriving ( Eq, Ord)
 data Card = Card {color :: Color,
                   value :: Int
@@ -13,13 +14,31 @@ data Card = Card {color :: Color,
 data Player = Player { hand :: Hand, table :: [FlagStatus] } deriving ( Show )
 data FlagStatus = FlagStatus { flag :: Flag, formation :: Formation }
 data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum, Eq)
---data Card = Card Color Int deriving (Show)
 data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving (Enum, Eq, Show)
-data PlayerNumber = Player1 | Player2
+data PlayerNumber = Player1 | Player2 deriving (Show)
 
-instance Eq Formation where
-  (==) formation = do
-    let 
+ftype :: FormationValue -> FormationType
+ftype (FormationValue x _)  = x
+
+fvalue :: FormationValue -> Int
+fvalue (FormationValue _ y)  = y
+
+instance Ord Formation where
+  lhs `compare` rhs = do
+    let lf = formationType lhs
+    let rf = formationType rhs
+    case (lf, rf) of
+      (Nothing, Nothing) -> EQ
+      (Just x, Nothing) -> GT
+      (Nothing, Just y) -> LT
+      (Just x, Just y) -> compare x y
+
+instance Ord FormationValue where
+  lhs `compare` rhs = if ftype lhs == ftype rhs then compare (fvalue lhs) (fvalue rhs) else compare (ftype lhs) (ftype rhs)
+
+formValue :: Formation -> Int
+formValue formation = foldl (+) 0 (map value (cards formation)) 
+
 
 instance Show Card where
   show card = (show $ color card) ++ " " ++ (show $ value card)
@@ -36,13 +55,13 @@ cards (Formation cardlist) = cardlist
 count :: Formation -> Int
 count formation = length $ cards formation
 
-formationType :: Formation -> Maybe FormationType
+formationType :: Formation -> Maybe FormationValue
 formationType formation
-  | isWedge formation = Just Wedge
-  | isPhalanx formation = Just Phalanx
-  | isBattalion formation = Just Battalion
-  | isSkirmish formation = Just Skirmish
-  | isHost formation = Just Host
+  | isWedge formation = Just (FormationValue Wedge $ formValue formation)
+  | isPhalanx formation = Just (FormationValue Phalanx $ formValue formation)
+  | isBattalion formation = Just (FormationValue Battalion $ formValue formation)
+  | isSkirmish formation = Just (FormationValue Skirmish $ formValue formation)
+  | isHost formation = Just (FormationValue Host $ formValue formation)
   | otherwise = Nothing
 
 isWedge :: Formation -> Bool
