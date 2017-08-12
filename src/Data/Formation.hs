@@ -15,7 +15,7 @@ data Formation = Formation [Card]
 data FormationType = Host | Skirmish | Battalion | Phalanx | Wedge
 data Card = Card {color :: Color,
                   value :: Int
-                  }
+                  } deriving ( Eq )
 data Player = Player { hand :: Hand, table :: [FlagStatus] } deriving ( Show )
 data FlagStatus = FlagStatus { flag :: Flag, formation :: Formation }
 data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum, Eq)

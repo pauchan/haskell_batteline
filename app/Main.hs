@@ -4,12 +4,6 @@ import System.Random (newStdGen, randoms, StdGen)
 import Data.List (sortOn)
 import Data.Formation
 
---color :: Card -> Color
---color (Card col _) = col
-
---value :: Card -> Int
---value (Card _ val) = val
-
 shuffle :: StdGen -> [a] -> [a]
 shuffle gen = map snd . sortOn fst . zip (randoms gen :: [Int])
 
@@ -80,9 +74,6 @@ flagFromString "8" = Just Eight
 flagFromString "9" = Just Nine
 flagFromString _ = Nothing
 
---updateFlag :: [FlagStatus] -> Card -> [FlagStatus
---updateFlag flagStatus card = 
-
 addCard :: Formation -> Card -> Formation
 addCard formation card = Formation $ ((cards formation) ++ [card])
 
@@ -95,7 +86,11 @@ addCardToFlag flagStatus card flag = FlagStatus { flag = flag, formation = addCa
 updatePlayer :: Player -> Card -> Flag -> Player
 updatePlayer player card flag = do
   let newFlagStatus = map (\x -> if isSelectedFlag x flag then addCardToFlag x card flag else x) $ table player
-  Player { hand = (hand player), table = newFlagStatus }
+  let newHand = updateHand (hand player) card
+  Player { hand = newHand, table = newFlagStatus }
+
+updateHand :: Hand -> Card -> Hand
+updateHand hand card = filter (/= card) hand
 
 updateGame :: PlayerNumber -> Card -> Flag -> GameState -> GameState
 updateGame player card flag gameState = do
