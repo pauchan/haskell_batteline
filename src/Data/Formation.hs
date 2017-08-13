@@ -15,7 +15,7 @@ data Player = Player { hand :: Hand, table :: [FlagStatus] } deriving ( Show )
 data FlagStatus = FlagStatus { flag :: Flag, formation :: Formation }
 data Color = Blue | Green | Orange | Purple | Red | Yellow deriving (Show, Enum, Eq)
 data Flag = One | Two | Three | Four | Five | Six | Seven | Eight | Nine deriving (Enum, Eq, Show)
-data PlayerNumber = Player1 | Player2 deriving (Show)
+data PlayerNumber = Player1 | Player2
 
 ftype :: FormationValue -> FormationType
 ftype (FormationValue x _)  = x
@@ -48,6 +48,10 @@ instance Show Formation where
 
 instance Show FlagStatus where
   show status = show $ formation status
+
+instance Show PlayerNumber where
+  show Player1 = "Player1"
+  show Player2 = "Player2"
 
 cards :: Formation -> [Card]
 cards (Formation cardlist) = cardlist

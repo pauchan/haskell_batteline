@@ -3,13 +3,17 @@ module Main where
 import System.Random (newStdGen, randoms, StdGen)
 import Data.List (sortOn)
 import Data.Tuple (swap)
+import System.Exit (exitSuccess)
 import Data.Formation
+import System.Console.ANSI (clearScreen)
 
 shuffle :: StdGen -> [a] -> [a]
 shuffle gen = map snd . sortOn fst . zip (randoms gen :: [Int])
 
-exit :: IO ()
-exit = undefined
+exit :: PlayerNumber -> IO ()
+exit pn = do
+  putStrLn ((show pn) ++ " wins!")
+  exitSuccess
 
 showFlags :: [FlagStatus] -> [FlagStatus] -> GameState -> String
 showFlags [] [] state = ""
@@ -17,10 +21,10 @@ showFlags [x] [y] state = showFlag x y state
 showFlags (x:xs) (y:ys) state = showFlag x y state ++ showFlags xs ys state
 
 showFlag :: FlagStatus -> FlagStatus -> GameState -> String
-showFlag x y state = show x ++ " | " ++ show y ++ (takenString x y state) ++ "\n"
+showFlag x y state = show x ++ " | " ++ show y ++ (takenString x state) ++ "\n"
 
-showStateForPlayer :: GameState -> Player -> Player -> String
-showStateForPlayer state player opponent = show  (show $ hand player) ++ "\n" ++ (showFlags (table player) (table opponent) state)
+showStateForPlayer :: PlayerNumber -> GameState -> Player -> Player -> String
+showStateForPlayer playerNumber state player opponent = (show playerNumber) ++ "\n\n" ++ (show $ hand player) ++ "\n\n" ++ (showFlags (table player) (table opponent) state)
 
 winning :: GameState -> PlayerNumber -> Bool
 winning state playerNumber = do
@@ -82,7 +86,8 @@ turn :: PlayerNumber -> GameState -> IO GameState
 turn playerNumber gameState = do
   let player = getPlayer playerNumber gameState
   let opponent = getPlayer (getOpponet playerNumber) gameState
-  putStr $ showStateForPlayer gameState player opponent
+  clearScreen
+  putStr $ showStateForPlayer playerNumber gameState player opponent
   draw playerNumber <$> playCard playerNumber gameState
 
 playCard :: PlayerNumber -> GameState -> IO GameState
@@ -106,10 +111,10 @@ takenBy flag playerNumber state = do
   let flagState = zipStates state playerNumber !! (intFromFlag flag)
   winningFlag pc flagState
 
-takenString :: FlagStatus -> FlagStatus -> GameState -> String
-takenString flagStatus oppStatus state = do
+takenString :: FlagStatus -> GameState -> String
+takenString flagStatus state = do
   let p1 = takenBy (flag flagStatus) Player1 state
-  let p2 = takenBy (flag oppStatus) Player2 state
+  let p2 = takenBy (flag flagStatus) Player2 state
   case (p1, p2) of 
     (True, _) -> " taken by player 1"
     (False, True) -> " taken by player 2"
@@ -173,9 +178,6 @@ addCard formation card = Formation $ ((cards formation) ++ [card])
 isSelectedFlag :: Flag -> FlagStatus -> Bool
 isSelectedFlag f flagStatus = flag flagStatus == f
 
---getFlagStatus :: GameState -> Flag -> FlagStatus
---getFlagStatus state flag = head (filter (isSelectedFlag flag) state  
-
 addCardToFlag :: FlagStatus -> Card -> Flag -> FlagStatus
 addCardToFlag flagStatus card flag = FlagStatus { flag = flag, formation = addCard (formation flagStatus) card }
 
@@ -212,12 +214,14 @@ gameLoop gameState = turn Player1 gameState >>= turn Player2
 runGame :: GameState -> IO ()
 runGame gameState = do
   gameState' <- turn Player1 gameState
-  if winning gameState' Player1 then
-    exit
+  if winning gameState' Player1 then do
+    putStr $ showStateForPlayer Player1 gameState' (player1 gameState') (player2 gameState')
+    exit Player1
   else do
     gameState'' <- turn Player2 gameState'
-    if winning gameState'' Player2 then
-      exit
+    if winning gameState'' Player2 then do
+      putStr $ showStateForPlayer Player2 gameState'' (player2 gameState'') (player1 gameState'')
+      exit Player2
     else
       runGame gameState''
 
